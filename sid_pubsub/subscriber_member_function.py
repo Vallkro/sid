@@ -12,7 +12,8 @@ class MinimalSubscriber(Node):
         # Load json config
         #absolute_path = os.path.dirname(os.path.abspath(__file__))
         #file_path = os.path.join(absolute_path, 'config.json')
-        file_path = '/home/valle/dev_ws/src/sid_pubsub/sid_pubsub/config.json'
+        homedir = os.environ['HOME']
+        file_path = homedir + '/dev_ws/src/sid_pubsub/sid_pubsub/config.json'
         f =open(file_path) 
         config = json.load(f)
         f.close()
