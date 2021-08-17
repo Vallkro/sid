@@ -1,6 +1,11 @@
 import networkx as nx
 from shapely.geometry import Polygon, Point, LineString
 import matplotlib.pyplot as plt
+import math
+import heapq
+import dimod
+import dwave_networkx as dnx
+
 class Grid:
     def __init__(self, boundry, obstacles, scale):
         self.boundry = boundry
@@ -28,7 +33,7 @@ class Grid:
                 print(p)
                 p_geom = Point(p)
                 inside_obstacle = self.in_obstacle(p_geom)
-                if self.boundry.contains(p_geom) and not inside_obstacle:
+                if p_geom.within(self.boundry) and not inside_obstacle:
 
                     # TODO: should also check for obstacles
                     self.G.add_node(p, pos = p)
@@ -52,10 +57,16 @@ class Grid:
 
                 inside_obstacle = self.in_obstacle(line)
                 if self.boundry.contains(line) and neighbour in node_list and not inside_obstacle:
-                    #TODO: should also check obs
-                    # add edge between node and neighbour
-                    self.G.add_edge(node, neighbour)
+                    # dist = sqrt ( (x1-x2)^2 + (y1-y2)^2)
+                    distance = math.sqrt((node[0] - neighbour[0])**2 + (node[1] - neighbour[1])**2)
+                    self.G.add_edge(node, neighbour, weight=distance)
 
+    def getRoute(self):
+        """ Returns an approximation of traveling salesman problem as a circular list of tuples [(x1,y1),...,(xn,yn),(x1,y1)]"""
+        # solve the pathplan to cover whole area
+        tsp = nx.approximation.traveling_salesman_problem
+        T = tsp(grid.G, weight="weight")
+        return T
 if __name__ == "__main__":
     # define square grid 
     bounds = Polygon([(0,0),(0,10),(10,10),(10,0)])
@@ -66,13 +77,18 @@ if __name__ == "__main__":
         ob_x,ob_y = ob.exterior.xy
         plt.plot(ob_x,ob_y)
     plt.plot(x,y)
-    plt.show()
     grid = Grid(bounds, obs, scale)
     grid.generate()
     pos = nx.get_node_attributes(grid.G,'pos')
     nx.draw(grid.G, pos, with_labels=True)
+    T = grid.getRoute()
+    ## solve the pathplan to cover whole area
+    #tsp = nx.approximation.traveling_salesman_problem
+    #T = tsp(grid.G, weight="weight")
+    print(T)
+    x,y = LineString(T).xy
+    plt.plot(x,y,'r',linewidth=2,)
     plt.show()
-
 
 
 
